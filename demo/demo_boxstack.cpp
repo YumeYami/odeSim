@@ -24,13 +24,45 @@
 #include <drawstuff/drawstuff.h>
 #include "texturepath.h"
 
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+
 #ifdef _MSC_VER
 #pragma warning(disable:4244 4305)  // for VC++, no precision loss complaints
 #endif
 
 #include "icosahedron_geom.h"
 
+using namespace std;
 
+void stlLoad(string fileName, dReal *Vertices, int VertexCount, dTriIndex *Indices, int IndexCount) {
+	ifstream file;
+	file.open("solid-cube.stl");
+
+	if ( file.is_open() ) {
+		while ( !file.eof() ) {
+			string line;
+			getline(file, line);
+			//cout << line;
+			istringstream iss(line);
+			string word;
+			iss >> word;
+			if ( word.strcmp("facet") ) {
+
+			}
+			cout << word << "\t";
+			float v;
+			iss >> v;
+			cout << v << "\t";
+			iss >> word;
+			cout << word << "\n";
+
+		}
+	}
+	file.close();
+}
 //<---- Convex Object
 dReal planes[] = // planes for a cube, these should coincide with the face array
 {
@@ -212,7 +244,7 @@ static void command(int cmd) {
 	int setBody;
 
 	cmd = locase(cmd);
-	if ( cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'y' || cmd == 'v' || cmd =='m') {
+	if ( cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'y' || cmd == 'v' ) {
 		setBody = 0;
 		if ( num < NUM ) {
 			i = num;
@@ -267,12 +299,12 @@ static void command(int cmd) {
 		else if ( cmd == 'v' ) {
 			dMassSetBox(&m, DENSITY, 0.25, 0.25, 0.25);
 #if 0
-			obj[i].geom[0] = dCreateConvex (space,
-											planes,
-											planecount,
-											points,
-											pointcount,
-											polygons);
+			obj[i].geom[0] = dCreateConvex(space,
+										   planes,
+										   planecount,
+										   points,
+										   pointcount,
+										   polygons);
 #else
 			obj[i].geom[0] = dCreateConvex(space,
 										   Sphere_planes,
@@ -402,7 +434,7 @@ static void command(int cmd) {
 			}
 			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 		}
-		
+
 		if ( !setBody )
 		for ( k = 0; k < GPB; k++ ) {
 			if ( obj[i].geom[k] ) dGeomSetBody(obj[i].geom[k], obj[i].body);
@@ -447,6 +479,10 @@ static void command(int cmd) {
 		if ( dBodyIsEnabled(obj[selected].body) )
 			doFeedback = 1;
 	}
+	else if ( cmd == 'm' ) {
+		stlLoad("0", nullptr, 0, nullptr, 0);
+
+	}
 }
 
 
@@ -476,7 +512,7 @@ void drawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb) {
 	//<---- Convex Object
 	else if ( type == dConvexClass ) {
 #if 0
-		dsDrawConvex(pos,R,planes,
+		dsDrawConvex(pos, R, planes,
 					 planecount,
 					 points,
 					 pointcount,
