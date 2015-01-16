@@ -33,36 +33,12 @@
 #pragma warning(disable:4244 4305)  // for VC++, no precision loss complaints
 #endif
 
+#define filename "solid-cube.stl"
+
 #include "icosahedron_geom.h"
 
 using namespace std;
 
-void stlLoad(string fileName, dReal *Vertices, int VertexCount, dTriIndex *Indices, int IndexCount) {
-	ifstream file;
-	file.open("solid-cube.stl");
-
-	if ( file.is_open() ) {
-		while ( !file.eof() ) {
-			string line;
-			getline(file, line);
-			//cout << line;
-			istringstream iss(line);
-			string word;
-			iss >> word;
-			if ( word.strcmp("facet") ) {
-
-			}
-			cout << word << "\t";
-			float v;
-			iss >> v;
-			cout << v << "\t";
-			iss >> word;
-			cout << word << "\n";
-
-		}
-	}
-	file.close();
-}
 //<---- Convex Object
 dReal planes[] = // planes for a cube, these should coincide with the face array
 {
@@ -233,6 +209,85 @@ char locase(char c) {
 	else return c;
 }
 
+#define MAX_VERTEX 3200
+#define MAX_INDEX (3200*3)
+
+//void stlLoad(string fileName, dReal *Vertices, int VertexCount, dTriIndex *Indices, int IndexCount) {
+void stlLoad(dTriMeshDataID data, dMass *m) {
+	cout << "init\n";
+	long VertexCount;
+	long IndexCount;
+	int Indices[MAX_INDEX];
+	dVector3 Vertices[MAX_VERTEX];
+	cout << "created\n";
+	/// build trimesh data
+	VertexCount = 0;
+	IndexCount = 0;
+	long i = 0;
+	ifstream file;
+	file.open(filename);
+	if ( file.is_open() ) {
+
+		string line;
+		getline(file, line);
+		//cout << line;
+		istringstream iss(line);
+		string word;
+		iss >> word;
+		if ( word != "facet" ) {
+			getline(file, line);
+			istringstream iss2(line);
+			iss2 >> word;
+		}
+		while ( word == "facet" ) {
+			getline(file, line);
+			getline(file, line);
+			istringstream iss3(line);
+			iss3 >> word;
+			iss3 >> Vertices[i][0];
+			iss3 >> Vertices[i][1];
+			iss3 >> Vertices[i][2];
+			getline(file, line);
+			istringstream iss4(line);
+			iss4 >> word;
+			iss4 >> Vertices[i + 1][0];
+			iss4 >> Vertices[i + 1][1];
+			iss4 >> Vertices[i + 1][2];
+			getline(file, line);
+			istringstream iss5(line);
+			iss5 >> word;
+			iss5 >> Vertices[i + 2][0];
+			iss5 >> Vertices[i + 2][1];
+			iss5 >> Vertices[i + 2][2];
+			getline(file, line);
+			getline(file, line);
+			getline(file, line);
+			istringstream iss6(line);
+			iss6 >> word;
+			i += 3;
+			for ( int i = 0; i < 3; i++ ) {
+				Indices[IndexCount] = IndexCount; IndexCount++;
+			}
+			if ( IndexCount >= MAX_INDEX - 9 ) {
+				cout << "vertex reach max\n";
+				break;
+			}
+		}
+		VertexCount = i;
+		cout << "vertex: " << VertexCount << "\n index: " << IndexCount << "\n";
+	}
+	file.close();
+	cout << "vertex:\n";
+	for ( int i = 0; i < VertexCount; i++ )
+		cout << Vertices[i][0] << " " << Vertices[i][1] << " " << Vertices[i][2] << "\n";
+	cout << "index:\n";
+	for ( int i = 0; i < IndexCount; i++ ) {
+		cout << Indices[i] << "\n";
+	}
+	dGeomTriMeshDataBuildSimple(data, (dReal*)Vertices, VertexCount, (dTriIndex*)Indices, IndexCount);
+	/// end build trimesh data
+
+}
 
 // called when a key pressed
 
@@ -244,7 +299,7 @@ static void command(int cmd) {
 	int setBody;
 
 	cmd = locase(cmd);
-	if ( cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'y' || cmd == 'v' ) {
+	if ( cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'y' || cmd == 'v' || cmd == 'm' ) {
 		setBody = 0;
 		if ( num < NUM ) {
 			i = num;
@@ -434,13 +489,30 @@ static void command(int cmd) {
 			}
 			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 		}
+		else if ( cmd == 'm' ) {
+			//cout << "c1\n";
+			dTriMeshDataID data = dGeomTriMeshDataCreate();
+			//cout << "c2\n";
+			stlLoad(data, &m);
+			//cout << "c3\n";
+			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
+			//cout << "c4\n";
+
+			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
+			//dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
+			//m.setTrimesh(DENSITY, obj[i].geom[0]);
+			//cout << "c5\n";
+		}
 
 		if ( !setBody )
 		for ( k = 0; k < GPB; k++ ) {
+			//cout << "c6\n";
 			if ( obj[i].geom[k] ) dGeomSetBody(obj[i].geom[k], obj[i].body);
 		}
-
+		//cout << "c7\n";
+		//m.c[0] = 0; m.c[1] = 0; m.c[2] = 0;
 		dBodySetMass(obj[i].body, &m);
+		//cout << "c8\n";
 	}
 
 	if ( cmd == ' ' ) {
@@ -479,10 +551,7 @@ static void command(int cmd) {
 		if ( dBodyIsEnabled(obj[selected].body) )
 			doFeedback = 1;
 	}
-	else if ( cmd == 'm' ) {
-		stlLoad("0", nullptr, 0, nullptr, 0);
 
-	}
 }
 
 
@@ -544,6 +613,15 @@ void drawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb) {
 		actual_pos[2] += pos[2];
 		dMultiply0_333(actual_R, R, R2);
 		drawGeom(g2, actual_pos, actual_R, 0);
+	}
+	else if ( type == dTriMeshClass ) {
+		//cout << "draw trimesh\n";
+		int tcount = dGeomTriMeshGetTriangleCount(g);
+		dVector3 v0, v1, v2;
+		for ( int i = 0; i < tcount; i++ ) {
+			dGeomTriMeshGetTriangle(g, i, &v0, &v1, &v2);
+			dsDrawTriangleD(pos, R, v0, v1, v2, 0);
+		}
 	}
 	if ( show_body ) {
 		dBodyID body = dGeomGetBody(g);
