@@ -214,19 +214,17 @@ char locase(char c) {
 #define MAX_VERTEX 9999
 #define MAX_INDEX 9999
 #define cubefile "cube2.stl"
-#define bunnyfile "mons1.stl"
+#define bunnyfile "mons2.stl"
 //#define cubefile "Mesh.stl"
 void stlLoad(string fileName, dTriMeshDataID data) {
 	cout << "init\n";
-	int VertexCount;
-	int IndexCount;
+	int VertexCount = 0;
+	int IndexCount = 0;
 	int Indices[MAX_INDEX];
 	dVector3 Vertices[MAX_VERTEX];
 	cout << "start loading\n";
 
 	/// build trimesh data
-	VertexCount = 0;
-	IndexCount = 0;
 	long i = 0;
 	ifstream file;
 	file.open(fileName);
@@ -262,7 +260,7 @@ void stlLoad(string fileName, dTriMeshDataID data) {
 
 			for ( int j = 0; j < 3; j++ ) {
 				Indices[IndexCount] = IndexCount; IndexCount++;
-				cout << "vertex " << i + j << ": " << Vertices[i + j][0] << "\t" << Vertices[i + j][1] << "\t" << Vertices[i + j][2] << "\n";
+				//cout << "vertex " << i + j << ": " << Vertices[i + j][0] << "\t" << Vertices[i + j][1] << "\t" << Vertices[i + j][2] << "\n";
 			}
 			i += 3;
 			if ( IndexCount >= MAX_INDEX - 3 ) {
@@ -317,7 +315,7 @@ static void command(int cmd) {
 		dMatrix3 R;
 		if ( random_pos ) {
 			dBodySetPosition(obj[i].body,
-							 dRandReal() * 2 - 1, dRandReal() * 2 - 1, dRandReal() + 2);
+							 dRandReal() * 2 - 1, dRandReal() * 2 - 1, dRandReal() + 5);
 			dRFromAxisAndAngle(R, dRandReal()*2.0 - 1.0, dRandReal()*2.0 - 1.0,
 							   dRandReal()*2.0 - 1.0, dRandReal()*10.0 - 5.0);
 		}
@@ -489,6 +487,7 @@ static void command(int cmd) {
 			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
 			cout << "c4\n";
 			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
+			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 			cout << "c5\n";
 			cout << "mass: " << m.mass << "\n";
 		}
@@ -501,10 +500,15 @@ static void command(int cmd) {
 			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
 			cout << "c4\n";
 			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
+			cout << "mass translate: " << m.c[0] << " " << m.c[1] << " " << m.c[2] << "\n";
+			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 			cout << "c5\n";
 			cout << "mass: " << m.mass << "\n";
-		}
 
+		}
+		else  if ( cmd == 'o' ) {
+
+		}
 		if ( !setBody )
 		for ( k = 0; k < GPB; k++ ) {
 			cout << "c6\n";
@@ -620,7 +624,7 @@ void drawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb) {
 		dVector3 v0, v1, v2;
 		for ( int i = 0; i < tcount; i++ ) {
 			dGeomTriMeshGetTriangle(g, i, &v0, &v1, &v2);
-			dsDrawTriangle(zeroPos, zeroRot, v0, v1, v2, 0);
+			dsDrawTriangle(zeroPos, zeroRot, v0, v1, v2, 1);
 		}
 	}
 	if ( show_body ) {
