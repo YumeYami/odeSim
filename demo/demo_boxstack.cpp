@@ -217,12 +217,14 @@ char locase(char c) {
 #define MAX_VERTEX 9999
 #define MAX_INDEX 9999
 #define basefile "mons2.stl"
-#define bodyfile "mons2.stl"
-#define cubefile "cube2.stl"
+#define bodyfile "mons1.stl"
+
+#define cubefile "cube.stl"
 #define mons1file "mons1.stl"
-#define mons2file "mons2.stl"
+#define mons2file "horse.stl"
 //#define cubefile "Mesh.stl"
-void stlLoad(string fileName, dTriMeshDataID data) {
+#define READ_CLOCKWISE 1
+void stlLoad(string fileName, dTriMeshDataID data, int reading_method) {
 	cout << "init\n";
 	int VertexCount = 0;
 	int IndexCount = 0;
@@ -252,12 +254,22 @@ void stlLoad(string fileName, dTriMeshDataID data) {
 			getline(file, line);
 			istringstream iss3(line);
 			iss3 >> word >> Vertices[i][0] >> Vertices[i][1] >> Vertices[i][2];
-			getline(file, line);
-			istringstream iss4(line);
-			iss4 >> word >> Vertices[i + 2][0] >> Vertices[i + 2][1] >> Vertices[i + 2][2];
-			getline(file, line);
-			istringstream iss5(line);
-			iss5 >> word >> Vertices[i + 1][0] >> Vertices[i + 1][1] >> Vertices[i + 1][2];
+			if ( reading_method == 1 ) {
+				getline(file, line);
+				istringstream iss4(line);
+				iss4 >> word >> Vertices[i + 2][0] >> Vertices[i + 2][1] >> Vertices[i + 2][2];
+				getline(file, line);
+				istringstream iss5(line);
+				iss5 >> word >> Vertices[i + 1][0] >> Vertices[i + 1][1] >> Vertices[i + 1][2];
+			}
+			else {
+				getline(file, line);
+				istringstream iss4(line);
+				iss4 >> word >> Vertices[i + 1][0] >> Vertices[i + 1][1] >> Vertices[i + 1][2];
+				getline(file, line);
+				istringstream iss5(line);
+				iss5 >> word >> Vertices[i + 2][0] >> Vertices[i + 2][1] >> Vertices[i + 2][2];
+			}
 			getline(file, line);
 			getline(file, line);
 			getline(file, line);
@@ -485,21 +497,21 @@ static void command(int cmd) {
 		}
 		else if ( cmd == 'm' ) {
 			dTriMeshDataID data = dGeomTriMeshDataCreate();
-			stlLoad(cubefile, data);
+			stlLoad(cubefile, data,1);
 			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
 			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
 			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 		}
 		else if ( cmd == 'n' ) {
 			dTriMeshDataID data = dGeomTriMeshDataCreate();
-			stlLoad(mons1file, data);
+			stlLoad(mons1file, data,1);
 			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
 			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
 			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 		}
 		else if ( cmd == 'o' ) {
 			dTriMeshDataID data = dGeomTriMeshDataCreate();
-			stlLoad(mons2file, data);
+			stlLoad(mons2file, data,0);
 			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
 			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
 			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
@@ -521,18 +533,18 @@ static void command(int cmd) {
 				dpos[0][j] = 0;
 			dpos[1][0] = 0;
 			dpos[1][1] = 0;
-			dpos[1][2] = 0.5;
+			dpos[1][2] = 1;
 			for ( k = 0; k < PART_NUM; k++ ) {
 				if ( k == 0 ) {
 					dTriMeshDataID data = dGeomTriMeshDataCreate();
-					stlLoad(basefile, data);
+					stlLoad(basefile, data,1);
 					obj[i].geom[k] = dCreateTriMesh(space, data, 0, 0, 0);
 					dMassSetTrimesh(&m2, DENSITY_BASE, obj[i].geom[k]);
 					dMassTranslate(&m2, -m2.c[0], -m2.c[1], -m2.c[2]);
 				}
 				else if ( k == 1 ) {
 					dTriMeshDataID data = dGeomTriMeshDataCreate();
-					stlLoad(bodyfile, data);
+					stlLoad(bodyfile, data,1);
 					obj[i].geom[k] = dCreateTriMesh(space, data, 0, 0, 0);
 					dMassSetTrimesh(&m2, DENSITY_BODY, obj[i].geom[k]);
 					dMassTranslate(&m2, -m2.c[0], -m2.c[1], -m2.c[2]);
