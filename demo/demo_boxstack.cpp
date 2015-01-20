@@ -33,8 +33,6 @@
 #pragma warning(disable:4244 4305)  // for VC++, no precision loss complaints
 #endif
 
-#define filename "solid-cube.stl"
-//#define filename "Mesh.stl"
 
 #include "icosahedron_geom.h"
 
@@ -215,8 +213,10 @@ char locase(char c) {
 
 #define MAX_VERTEX 9999
 #define MAX_INDEX 9999
-//void stlLoad(string fileName, dReal *Vertices, int VertexCount, dTriIndex *Indices, int IndexCount) {
-void stlLoad(dTriMeshDataID data, dMass *m) {
+#define cubefile "cube2.stl"
+#define bunnyfile "mons1.stl"
+//#define cubefile "Mesh.stl"
+void stlLoad(string fileName, dTriMeshDataID data) {
 	cout << "init\n";
 	int VertexCount;
 	int IndexCount;
@@ -229,7 +229,7 @@ void stlLoad(dTriMeshDataID data, dMass *m) {
 	IndexCount = 0;
 	long i = 0;
 	ifstream file;
-	file.open(filename);
+	file.open(fileName);
 	if ( file.is_open() ) {
 
 		string line;
@@ -250,19 +250,21 @@ void stlLoad(dTriMeshDataID data, dMass *m) {
 			iss3 >> word >> Vertices[i][0] >> Vertices[i][1] >> Vertices[i][2];
 			getline(file, line);
 			istringstream iss4(line);
-			iss4 >> word >> Vertices[i + 1][0] >> Vertices[i + 1][1] >> Vertices[i + 1][2];
+			iss4 >> word >> Vertices[i + 2][0] >> Vertices[i + 2][1] >> Vertices[i + 2][2];
 			getline(file, line);
 			istringstream iss5(line);
-			iss5 >> word >> Vertices[i + 2][0] >> Vertices[i + 2][1] >> Vertices[i + 2][2];
+			iss5 >> word >> Vertices[i + 1][0] >> Vertices[i + 1][1] >> Vertices[i + 1][2];
 			getline(file, line);
 			getline(file, line);
 			getline(file, line);
 			istringstream iss6(line);
 			iss6 >> word;
-			i += 3;
+
 			for ( int j = 0; j < 3; j++ ) {
 				Indices[IndexCount] = IndexCount; IndexCount++;
+				cout << "vertex " << i + j << ": " << Vertices[i + j][0] << "\t" << Vertices[i + j][1] << "\t" << Vertices[i + j][2] << "\n";
 			}
+			i += 3;
 			if ( IndexCount >= MAX_INDEX - 3 ) {
 				cout << "vertex reach max\n";
 				break;
@@ -272,8 +274,10 @@ void stlLoad(dTriMeshDataID data, dMass *m) {
 		cout << "vertex: " << VertexCount << "\n index: " << IndexCount << "\n";
 	}
 	file.close();
-	
+	cout << "build data\n";
 	dGeomTriMeshDataBuildSimple(data, (dReal*)Vertices, VertexCount, (dTriIndex*)Indices, IndexCount);
+
+	cout << "building completed\n";
 	/// end build trimesh data
 
 }
@@ -288,7 +292,7 @@ static void command(int cmd) {
 	int setBody;
 
 	cmd = locase(cmd);
-	if ( cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'y' || cmd == 'v' || cmd == 'm' ) {
+	if ( cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'y' || cmd == 'v' || cmd == 'm' || cmd == 'n' ) {
 		setBody = 0;
 		if ( num < NUM ) {
 			i = num;
@@ -419,7 +423,6 @@ static void command(int cmd) {
 			}
 			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 			dBodySetMass(obj[i].body, &m);
-
 		}
 		else if ( cmd == 'x' ) {
 			dGeomID g2[GPB];		// encapsulated geometries
@@ -433,7 +436,6 @@ static void command(int cmd) {
 			for ( j = 0; j < GPB; j++ ) {
 				for ( k = 0; k < 3; k++ ) dpos[j][k] = dRandReal()*0.3 - 0.15;
 			}
-
 			for ( k = 0; k < GPB; k++ ) {
 				obj[i].geom[k] = dCreateGeomTransform(space);
 				dGeomTransformSetCleanup(obj[i].geom[k], 1);
@@ -479,29 +481,38 @@ static void command(int cmd) {
 			dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
 		}
 		else if ( cmd == 'm' ) {
-			//cout << "c1\n";
+			cout << "c1\n";
 			dTriMeshDataID data = dGeomTriMeshDataCreate();
-			//cout << "c2\n";
-			stlLoad(data, &m);
-			//cout << "c3\n";
+			cout << "c2\n";
+			stlLoad(cubefile, data);
+			cout << "c3\n";
 			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
-			//cout << "c4\n";
-
+			cout << "c4\n";
 			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
-			//dMassTranslate(&m, -m.c[0], -m.c[1], -m.c[2]);
-			//m.setTrimesh(DENSITY, obj[i].geom[0]);
-			//cout << "c5\n";
+			cout << "c5\n";
+			cout << "mass: " << m.mass << "\n";
+		}
+		else if ( cmd == 'n' ) {
+			cout << "c1\n";
+			dTriMeshDataID data = dGeomTriMeshDataCreate();
+			cout << "c2\n";
+			stlLoad(bunnyfile, data);
+			cout << "c3\n";
+			obj[i].geom[0] = dCreateTriMesh(space, data, 0, 0, 0);
+			cout << "c4\n";
+			dMassSetTrimesh(&m, DENSITY, obj[i].geom[0]);
+			cout << "c5\n";
+			cout << "mass: " << m.mass << "\n";
 		}
 
 		if ( !setBody )
 		for ( k = 0; k < GPB; k++ ) {
-			//cout << "c6\n";
+			cout << "c6\n";
 			if ( obj[i].geom[k] ) dGeomSetBody(obj[i].geom[k], obj[i].body);
 		}
-		//cout << "c7\n";
-		//m.c[0] = 0; m.c[1] = 0; m.c[2] = 0;
+		cout << "c7\n";
 		dBodySetMass(obj[i].body, &m);
-		//cout << "c8\n";
+		cout << "c8\n";
 	}
 
 	if ( cmd == ' ' ) {
