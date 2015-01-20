@@ -34,6 +34,7 @@
 #endif
 
 #define filename "solid-cube.stl"
+//#define filename "Mesh.stl"
 
 #include "icosahedron_geom.h"
 
@@ -83,6 +84,8 @@ unsigned int polygons[] = //Polygons for a cube (6 squares)
 	4, 2, 3, 7, 6, // negative Y
 	4, 5, 4, 6, 7, // negative Z
 };
+dVector3 zeroPos = {0, 0, 0};
+const double zeroRot[12] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0};
 //----> Convex Object
 
 // select correct drawing functions
@@ -93,6 +96,7 @@ unsigned int polygons[] = //Polygons for a cube (6 squares)
 #define dsDrawCylinder dsDrawCylinderD
 #define dsDrawCapsule dsDrawCapsuleD
 #define dsDrawConvex dsDrawConvexD
+#define dsDrawTriangle dsDrawTriangleD
 #endif
 
 
@@ -209,17 +213,17 @@ char locase(char c) {
 	else return c;
 }
 
-#define MAX_VERTEX 3200
-#define MAX_INDEX (3200*3)
-
+#define MAX_VERTEX 9999
+#define MAX_INDEX 9999
 //void stlLoad(string fileName, dReal *Vertices, int VertexCount, dTriIndex *Indices, int IndexCount) {
 void stlLoad(dTriMeshDataID data, dMass *m) {
 	cout << "init\n";
-	long VertexCount;
-	long IndexCount;
+	int VertexCount;
+	int IndexCount;
 	int Indices[MAX_INDEX];
 	dVector3 Vertices[MAX_VERTEX];
-	cout << "created\n";
+	cout << "start loading\n";
+
 	/// build trimesh data
 	VertexCount = 0;
 	IndexCount = 0;
@@ -243,32 +247,23 @@ void stlLoad(dTriMeshDataID data, dMass *m) {
 			getline(file, line);
 			getline(file, line);
 			istringstream iss3(line);
-			iss3 >> word;
-			iss3 >> Vertices[i][0];
-			iss3 >> Vertices[i][1];
-			iss3 >> Vertices[i][2];
+			iss3 >> word >> Vertices[i][0] >> Vertices[i][1] >> Vertices[i][2];
 			getline(file, line);
 			istringstream iss4(line);
-			iss4 >> word;
-			iss4 >> Vertices[i + 1][0];
-			iss4 >> Vertices[i + 1][1];
-			iss4 >> Vertices[i + 1][2];
+			iss4 >> word >> Vertices[i + 1][0] >> Vertices[i + 1][1] >> Vertices[i + 1][2];
 			getline(file, line);
 			istringstream iss5(line);
-			iss5 >> word;
-			iss5 >> Vertices[i + 2][0];
-			iss5 >> Vertices[i + 2][1];
-			iss5 >> Vertices[i + 2][2];
+			iss5 >> word >> Vertices[i + 2][0] >> Vertices[i + 2][1] >> Vertices[i + 2][2];
 			getline(file, line);
 			getline(file, line);
 			getline(file, line);
 			istringstream iss6(line);
 			iss6 >> word;
 			i += 3;
-			for ( int i = 0; i < 3; i++ ) {
+			for ( int j = 0; j < 3; j++ ) {
 				Indices[IndexCount] = IndexCount; IndexCount++;
 			}
-			if ( IndexCount >= MAX_INDEX - 9 ) {
+			if ( IndexCount >= MAX_INDEX - 3 ) {
 				cout << "vertex reach max\n";
 				break;
 			}
@@ -277,13 +272,7 @@ void stlLoad(dTriMeshDataID data, dMass *m) {
 		cout << "vertex: " << VertexCount << "\n index: " << IndexCount << "\n";
 	}
 	file.close();
-	cout << "vertex:\n";
-	for ( int i = 0; i < VertexCount; i++ )
-		cout << Vertices[i][0] << " " << Vertices[i][1] << " " << Vertices[i][2] << "\n";
-	cout << "index:\n";
-	for ( int i = 0; i < IndexCount; i++ ) {
-		cout << Indices[i] << "\n";
-	}
+	
 	dGeomTriMeshDataBuildSimple(data, (dReal*)Vertices, VertexCount, (dTriIndex*)Indices, IndexCount);
 	/// end build trimesh data
 
@@ -620,7 +609,7 @@ void drawGeom(dGeomID g, const dReal *pos, const dReal *R, int show_aabb) {
 		dVector3 v0, v1, v2;
 		for ( int i = 0; i < tcount; i++ ) {
 			dGeomTriMeshGetTriangle(g, i, &v0, &v1, &v2);
-			dsDrawTriangleD(pos, R, v0, v1, v2, 0);
+			dsDrawTriangle(zeroPos, zeroRot, v0, v1, v2, 0);
 		}
 	}
 	if ( show_body ) {
